@@ -44,4 +44,4 @@ To change one, add a new entry that replaces it instead of editing history.
 - **Chose:** tokens in `.env`, browser profile and database in `data/`, both gitignored. The repo is public.
 
 ## D10. You commit and push; Claude gives the commands (2026-11-01)
-- **Chose:** Claude writes code and docs and gives you the git commands after each step.
+- **Chose:** Claude writes code and docs and gives you the git commands after each step. Commit messages carry no AI co-author line.

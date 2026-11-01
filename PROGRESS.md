@@ -8,7 +8,7 @@ Major choices and their reasons live in [DECISIONS.md](DECISIONS.md).
 | # | Phase | Status |
 | --- | --- | --- |
 | 1 | Recon: book one ticket by hand with `playwright codegen`, write down every page and selector | Not started (needs you) |
-| 2 | Watcher + Telegram alert | In progress: page parser done; watcher loop next |
+| 2 | Watcher + Telegram alert | In progress: parser, matcher and job store done; watcher loop next |
 | 3 | Intake agent (Telegram + Claude turns a message into a job) | Not started |
 | 4 | Booker to seat hold | Waiting on recon. Seat scorer done |
 | 5 | Payment handoff + ticket | Not started |
@@ -32,11 +32,21 @@ Major choices and their reasons live in [DECISIONS.md](DECISIONS.md).
 - `movie_agent/seats.py`: picks N seats side by side, never across an aisle, inside your row band (front, middle, back), closest to the centre, under your price cap.
 - The booker will turn the real seat map into this format after recon.
 
+### Step 4: Job store, show matcher, learned fallback (2026-11-01)
+- `movie_agent/jobs.py`: `JobSpec` holds what you asked for (movie, theatres in order of preference, date, time window, formats, tickets, rows, price cap). It doubles as the structured output Claude will fill in Step 5.
+- SQLite `Store` in `data/agent.db`: jobs and their status, your fallback answers, theatres seen on pages, a small cache, and an event log.
+- `movie_agent/matcher.py` sorts a page's shows into three groups:
+  - **exact:** your theatre, time window and format;
+  - **other theatre:** right time and format at a theatre you didn't list;
+  - **other time:** your theatre, outside your window or format.
+- Within each group, preferred theatres come first, then shows closest to the middle of your time window.
+- Fallback (D6): the agent offers only the options that exist right now. Once your last `LEARN_AFTER` answers agree, it applies that answer itself.
+- 18 tests pass.
+
 ## Next
 
-1. **Step 4:** job store (SQLite), show matcher (theatre, time window, format), learned fallback.
-2. **Step 5:** Claude intake: message to job, confirm before arming.
-3. **Step 6:** Chrome watcher loop + Telegram bot (`/jobs`, `/stop`, fallback buttons).
+1. **Step 5:** Claude intake: message to job, confirm before arming.
+2. **Step 6:** Chrome watcher loop + Telegram bot (`/jobs`, `/stop`, fallback buttons).
 
 ## Known facts and open issues
 
