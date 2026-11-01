@@ -9,7 +9,7 @@ Major choices and their reasons live in [DECISIONS.md](DECISIONS.md).
 | --- | --- | --- |
 | 1 | Recon: book one ticket by hand with `playwright codegen`, write down every page and selector | Not started (needs you) |
 | 2 | Watcher + Telegram alert | In progress: parser, matcher and job store done; watcher loop next |
-| 3 | Intake agent (Telegram + Claude turns a message into a job) | Not started |
+| 3 | Intake agent (Telegram + Claude turns a message into a job) | In progress: Claude parsing done; live check and Telegram side pending |
 | 4 | Booker to seat hold | Waiting on recon. Seat scorer done |
 | 5 | Payment handoff + ticket | Not started |
 | 6 | Hit-movie mode | Not started |
@@ -43,10 +43,26 @@ Major choices and their reasons live in [DECISIONS.md](DECISIONS.md).
 - Fallback (D6): the agent offers only the options that exist right now. Once your last `LEARN_AFTER` answers agree, it applies that answer itself.
 - 18 tests pass.
 
+### Step 5: Claude intake (2026-11-01)
+- `movie_agent/intake.py` sends your message to Claude (`claude-opus-5-5`, low effort, structured output, refusal fallback on). The prompt includes:
+  - today's date;
+  - the default city;
+  - the known theatres;
+  - the movie catalog;
+  - any BookMyShow link you pasted.
+- The reply is a `JobSpec`. Plain code then checks what it can (D11):
+  - the movie code must come from the catalog or your link;
+  - unknown theatre codes are dropped;
+  - past dates, malformed times and odd ticket counts become a question back to you.
+- If something essential is missing, `clarify` holds one short question for the bot to ask.
+- `tests/test_intake.py`: offline tests, including the exact request sent to the API, checked with a fake HTTP transport.
+- `tests/test_intake_live.py`: the plan's Phase 3 check, 10 differently worded requests against the real API. **Not run yet:** needs your API key in `.env`, then
+  `RUN_LIVE=1 PYTHONPATH= .venv/bin/python -m pytest -q tests/test_intake_live.py`
+
 ## Next
 
-1. **Step 5:** Claude intake: message to job, confirm before arming.
-2. **Step 6:** Chrome watcher loop + Telegram bot (`/jobs`, `/stop`, fallback buttons).
+1. **Step 6:** Chrome watcher loop + Telegram bot: message to job with Arm/Cancel buttons, `/jobs`, `/stop`, fallback buttons, block back-off.
+2. Then Phase 1 recon (you), which unlocks the booker.
 
 ## Known facts and open issues
 

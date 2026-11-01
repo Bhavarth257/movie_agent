@@ -45,3 +45,8 @@ To change one, add a new entry that replaces it instead of editing history.
 
 ## D10. You commit and push; Claude gives the commands (2026-11-01)
 - **Chose:** Claude writes code and docs and gives you the git commands after each step. Commit messages carry no AI co-author line.
+
+## D11. Check Claude's output in code (2026-11-01)
+- **Chose:** after Claude fills in a job, plain code checks the facts it can verify: the movie code must come from the catalog or your link, theatre codes from the known list, the date can't be past, times must be HH:MM, and 1–10 tickets. Anything wrong turns into a question back to you instead of a silent guess.
+- **Why:** a wrong movie or theatre code would watch the wrong page all the way to release day without anyone noticing.
+- **Cost:** sometimes one extra question before arming.
