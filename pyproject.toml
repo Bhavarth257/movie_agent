@@ -1,0 +1,19 @@
+[project]
+name = "movie-agent"
+version = "0.1.0"
+description = "Telegram agent that watches BookMyShow and alerts you the moment your show opens"
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic>=2.3",
+    "python-telegram-bot>=22",
+    "playwright>=1.64",
+    "pydantic>=2.14",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=9"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["live: calls the real Claude API (run with RUN_LIVE=1)"]
