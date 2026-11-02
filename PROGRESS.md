@@ -9,7 +9,7 @@ Major choices and their reasons live in [DECISIONS.md](DECISIONS.md).
 | --- | --- | --- |
 | 1 | Recon: book one ticket by hand with `playwright codegen`, write down every page and selector | Not started (needs you) |
 | 2 | Watcher + Telegram alert | In progress: parser, matcher and job store done; watcher loop next |
-| 3 | Intake agent (Telegram + Claude turns a message into a job) | In progress: Claude parsing done; live check and Telegram side pending |
+| 3 | Intake agent (Telegram message to booking job) | In progress: free rules parser (default) and Claude parser done; Telegram side next |
 | 4 | Booker to seat hold | Waiting on recon. Seat scorer done |
 | 5 | Payment handoff + ticket | Not started |
 | 6 | Hit-movie mode | Not started |
@@ -44,7 +44,7 @@ Major choices and their reasons live in [DECISIONS.md](DECISIONS.md).
 - 18 tests pass.
 
 ### Step 5: Claude intake (2026-11-01)
-- `movie_agent/intake.py` sends your message to Claude (`claude-opus-5-5`, low effort, structured output, refusal fallback on). The prompt includes:
+- `movie_agent/intake.py` sends your message to Claude (`claude-haiku-5-5` by default, see D12; low effort, structured output). The prompt includes:
   - today's date;
   - the default city;
   - the known theatres;
@@ -56,12 +56,26 @@ Major choices and their reasons live in [DECISIONS.md](DECISIONS.md).
   - past dates, malformed times and odd ticket counts become a question back to you.
 - If something essential is missing, `clarify` holds one short question for the bot to ask.
 - `tests/test_intake.py`: offline tests, including the exact request sent to the API, checked with a fake HTTP transport.
-- `tests/test_intake_live.py`: the plan's Phase 3 check, 10 differently worded requests against the real API. **Not run yet:** needs your API key in `.env`, then
+- `tests/test_intake_live.py`: the plan's Phase 3 check, 10 differently worded requests against the real API.
+  **First attempt (2026-11-01):** the key works, but the account has no credit ("credit balance is too low"), so no case reached the model. Rerun after topping up:
   `RUN_LIVE=1 PYTHONPATH= .venv/bin/python -m pytest -q tests/test_intake_live.py`
+
+### Step 6: Free rules parser (2026-11-02)
+- `movie_agent/rules.py`: no LLM, no cost (D13). It reads, in this order:
+  - the movie (from the catalog, or a pasted link);
+  - the time ("evening", "after 6pm", "between 2 and 5 pm", "9pm show");
+  - the date ("friday", "tomorrow", "6 nov", "the 10th", "15/11");
+  - a price cap ("max 300", "under ₹250");
+  - the ticket count ("2 tickets", "x2", "need 2", "for 4 people");
+  - theatres, in the order you name them ("apsara first, else pvr");
+  - formats (IMAX, ATMOS, ...) and rows (front, back, middle).
+- Each rule blanks out the words it used, so "Jailer 2" is never read as 2 tickets and "6pm" never as the 6th.
+- The 10 test requests now live in `tests/intake_cases.py` and run against both parsers. All 10 pass with the rules parser, plus 14 more checks for dates, times and prices.
+- `INTAKE=rules` (default) or `INTAKE=claude` in `.env`.
 
 ## Next
 
-1. **Step 6:** Chrome watcher loop + Telegram bot: message to job with Arm/Cancel buttons, `/jobs`, `/stop`, fallback buttons, block back-off.
+1. **Step 7:** Chrome watcher loop + Telegram bot: message to job with Arm/Cancel buttons, `/jobs`, `/stop`, fallback buttons, block back-off.
 2. Then Phase 1 recon (you), which unlocks the booker.
 
 ## Known facts and open issues

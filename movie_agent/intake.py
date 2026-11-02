@@ -35,6 +35,8 @@ async def parse_request(
     catalog: list[Movie],
     venues: list[tuple[str, str]],
 ) -> JobSpec:
+    # Haiku has no server-side refusal fallback; the larger models re-run a declined request on another model.
+    fallback = {} if model.startswith("claude-haiku") else {"betas": ["server-side-fallback-2026-07-01"], "fallbacks": "default"}
     response = await client.beta.messages.parse(
         model=model,
         max_tokens=4000,
@@ -42,8 +44,7 @@ async def parse_request(
         messages=[{"role": "user", "content": build_prompt(text, today=today, city=city, catalog=catalog, venues=venues)}],
         output_format=JobSpec,
         output_config={"effort": "low"},
-        betas=["server-side-fallback-2026-07-01"],
-        fallbacks="default",
+        **fallback,
     )
     if response.stop_reason == "refusal":
         raise IntakeError("Claude declined this request.")

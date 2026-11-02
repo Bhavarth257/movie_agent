@@ -17,6 +17,7 @@ class Settings:
     city: str
     poll_seconds: int
     learn_after: int
+    intake: str  # "rules" (free, default) or "claude" (paid API)
     model: str
     data_dir: Path
 
@@ -42,6 +43,7 @@ def load() -> Settings:
         city=os.environ.get("BMS_CITY", "vellore").strip().lower(),
         poll_seconds=int(os.environ.get("POLL_SECONDS", "60")),
         learn_after=int(os.environ.get("LEARN_AFTER", "2")),
-        model=os.environ.get("CLAUDE_MODEL", "claude-opus-5-5"),
+        intake=os.environ.get("INTAKE", "rules").strip().lower(),
+        model=os.environ.get("CLAUDE_MODEL", "claude-haiku-5-5"),
         data_dir=data_dir,
     )

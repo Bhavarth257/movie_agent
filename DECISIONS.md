@@ -50,3 +50,15 @@ To change one, add a new entry that replaces it instead of editing history.
 - **Chose:** after Claude fills in a job, plain code checks the facts it can verify: the movie code must come from the catalog or your link, theatre codes from the known list, the date can't be past, times must be HH:MM, and 1–10 tickets. Anything wrong turns into a question back to you instead of a silent guess.
 - **Why:** a wrong movie or theatre code would watch the wrong page all the way to release day without anyone noticing.
 - **Cost:** sometimes one extra question before arming.
+
+## D12. Intake runs on Claude Haiku (2026-11-01)
+- **Chose:** `claude-haiku-5-5` as the default intake model, at low effort. Change it with `CLAUDE_MODEL` in `.env`.
+- **Why:** the Anthropic API is paid per use. Opus costs about ₹1.5–2 per message; Haiku costs about ₹0.05. Pulling a job out of a short chat message is a simple task, and the 10-case live check will show whether Haiku is good enough.
+- **Cost:** Haiku has no server-side refusal fallback, so the intake sends `fallbacks` only to the larger models. If Haiku gets cases wrong, switch back to `claude-opus-5-5`.
+- **Replaces:** the model part of D5.
+
+## D13. Free rules parser is the default intake (2026-11-02)
+- **Chose:** `movie_agent/rules.py` turns your message into a job with plain rules, at no cost. Claude intake stays in the code, switched off (`INTAKE=claude` in `.env` turns it on).
+- **Why:** no paid API use for now. The plan already listed a no-LLM option. All 10 test requests, written for Claude, also pass with the rules parser.
+- **Cost:** the rules only understand phrasing they were written for. Unusual wording can be misread, so the bot always shows the job and waits for your OK before arming (the same as with Claude). The same code checks (D11) run on both parsers.
+- **Replaces:** D12 as the default. D12 still applies when `INTAKE=claude`.
